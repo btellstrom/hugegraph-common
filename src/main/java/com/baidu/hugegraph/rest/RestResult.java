@@ -20,6 +20,7 @@
 package com.baidu.hugegraph.rest;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.core.MultivaluedMap;
@@ -66,6 +67,9 @@ public class RestResult {
     }
 
     public <T> List<T> readList(String key, Class<T> clazz) {
+        JavaType type = mapper.getTypeFactory()
+                              .constructParametrizedType(ArrayList.class,
+                                                         List.class, clazz);
         try {
             JsonNode root = mapper.readTree(this.content);
             JsonNode element = root.get(key);
@@ -73,9 +77,7 @@ public class RestResult {
                 throw new SerializeException(
                           "Can't find value of the key: %s in json.", key);
             }
-            JavaType type = mapper.getTypeFactory()
-                            .constructParametricType(List.class, clazz);
-            return mapper.readValue(element.toString(), type);
+            return mapper.readValue(element.asText(), type);
         } catch (IOException e) {
             throw new SerializeException(
                       "Failed to deserialize %s", e, this.content);
@@ -83,9 +85,10 @@ public class RestResult {
     }
 
     public <T> List<T> readList(Class<T> clazz) {
+        JavaType type = mapper.getTypeFactory()
+                              .constructParametrizedType(ArrayList.class,
+                                                         List.class, clazz);
         try {
-            JavaType type = mapper.getTypeFactory()
-                            .constructParametricType(List.class, clazz);
             return mapper.readValue(this.content, type);
         } catch (IOException e) {
             throw new SerializeException(
